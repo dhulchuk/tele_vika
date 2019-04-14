@@ -8,7 +8,7 @@ from dynamo import insert_spending, get_spending
 
 TOKEN = os.getenv('VIKA_TOKEN')
 HELP = """
-*Test:*
+*Hello:*
     `/start`
 
 *Note spendings:*
