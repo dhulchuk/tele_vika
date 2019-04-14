@@ -48,9 +48,8 @@ def spent_handler(update, context):
     tag = data[2]
     user_id = update.effective_user.id
     insert_spending(user_id, amount, tag)
-    response = "*Noted spending:*\n"
-    response += f"*Amount:* _{amount}_\n"
-    response += f"*Tag*: _{tag}_\n"
+    response = "*Noted spending:*\n\n"
+    response += f"*{tag}:* `{amount}`"
 
     context.bot.send_message(chat_id=update.message.chat_id, parse_mode='Markdown', text=response)
 
@@ -63,9 +62,10 @@ def report_handler(update, context):
         tag = s['Tag']
         by_tags.setdefault(tag, 0)
         by_tags[tag] += int(s['Amount'])
-    response = "*Report:*\n"
+    response = "*Report:*\n\n"
     for k, v in by_tags.items():
-        response += f'*{k}*: `{v}`\n'
+        if v != 0:
+            response += f'*{k}*: `{v}`\n'
     response += f'\n*Sum:* `{sum(by_tags.values())}`'
     print(response)
     context.bot.send_message(chat_id=update.message.chat_id, parse_mode='Markdown', text=response)

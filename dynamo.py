@@ -1,19 +1,20 @@
 import datetime
-# import os
+import os
 
 import boto3
 from boto3.dynamodb.conditions import Key
 
 DYNAMODB = 'dynamodb'
 REGION = 'eu-central-1'
-TABLE = 'spending'
-
-# def get_client():
-#     return boto3.client(DYNAMODB, region_name=REGION)
+TABLE = 'spent'
 
 
 def get_db():
-    return boto3.resource(DYNAMODB, region_name=REGION)
+    return boto3.resource(
+        DYNAMODB, region_name=REGION,
+        # aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+        # aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    )
 
 
 def insert_spending(user_id: int, amount, tag):
@@ -40,3 +41,5 @@ def get_spending(user_id: int, after: int = None):
     return res['Items']
 
 
+if __name__ == '__main__':
+    print(get_spending(123))

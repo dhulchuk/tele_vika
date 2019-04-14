@@ -37,10 +37,10 @@ resources:
     DynamoDbTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: spending
+        TableName: spent
         AttributeDefinitions:
           - AttributeName: UserId
-            AttributeType: S
+            AttributeType: N
           - AttributeName: Timestamp
             AttributeType: N
         KeySchema:
@@ -64,6 +64,6 @@ resources:
                 - dynamodb:Query
                 - dynamodb:GetItem
                 - dynamodb:PutItem
-              Resource: arn:aws:dynamodb:*:*:table/spending
+              Resource: arn:aws:dynamodb:*:*:table/spent
         Roles:
           - Ref: IamRoleLambdaExecution
