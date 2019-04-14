@@ -4,7 +4,7 @@ import os
 import telegram
 from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
 
-from tele_vika.dynamo import insert_spent, get_spending, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+from dynamo import insert_spending, get_spending
 
 TOKEN = os.getenv('VIKA_TOKEN')
 HELP = """
@@ -46,8 +46,8 @@ def spent_handler(update, context):
     except ValueError:
         return error(update, context)
     tag = data[2]
-    user_id = str(update.effective_user.id)
-    insert_spent(user_id, amount, tag)
+    user_id = update.effective_user.id
+    insert_spending(user_id, amount, tag)
     response = "*Noted spending:*\n"
     response += f"*Amount:* _{amount}_\n"
     response += f"*Tag*: _{tag}_\n"
@@ -56,11 +56,7 @@ def spent_handler(update, context):
 
 
 def report_handler(update, context):
-
-    print(AWS_ACCESS_KEY_ID[:3])
-    print(AWS_SECRET_ACCESS_KEY[:3])
-    user_id = str(update.effective_user.id)
-    # user_id = 'user_id'
+    user_id = update.effective_user.id
     data = get_spending(user_id)
     by_tags = {}
     for s in data:
