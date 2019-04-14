@@ -1,6 +1,9 @@
 # Vika
 
 
+Telegram bot on AWS Lambda.
+
+
 ## Environment variables
 
 ```
