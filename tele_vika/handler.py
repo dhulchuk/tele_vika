@@ -4,23 +4,13 @@ import os
 import telegram
 from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
 
-from dynamo import insert_spending, get_spending
+from tele_vika.dynamo import insert_spending, get_spending
 
 TOKEN = os.getenv('VIKA_TOKEN')
-HELP = """
-*Hello:*
-    `/start`
-
-*Note spendings:*
-    `/spent 1337 tag`
-
-*Report spendings:* 
-    `/report`
-"""
 
 
 def error(update, context):
-    context.bot.send_message(chat_id=update.message.chat_id, text="Wrong message format. Type /help")
+    context.bot.send_message(chat_id=update.message.chat_id, text="Wrong message format.\n Type /help")
 
 
 def echo(update, context):
@@ -28,7 +18,17 @@ def echo(update, context):
 
 
 def help_handler(update, context):
-    context.bot.send_message(chat_id=update.message.chat_id, parse_mode='Markdown', text=HELP)
+    help_message = '\n'.join([
+        '*Hello:*',
+        '    `/start`',
+        '',
+        '*Note spendings:*',
+        '    `/spent 1337 tag`',
+        '',
+        '*Report spendings:*',
+        '    `/report`',
+    ])
+    context.bot.send_message(chat_id=update.message.chat_id, parse_mode='Markdown', text=help_message)
 
 
 def start_handler(update, context):
@@ -63,15 +63,15 @@ def report_handler(update, context):
         by_tags.setdefault(tag, 0)
         by_tags[tag] += int(s['Amount'])
     response = "*Report:*\n\n"
-    for k, v in by_tags.items():
-        if v != 0:
-            response += f'*{k}*: `{v}`\n'
+    for tag, amount in by_tags.items():
+        if amount != 0:
+            response += f'*{tag}*: `{amount}`\n'
     response += f'\n*Sum:* `{sum(by_tags.values())}`'
     print(response)
     context.bot.send_message(chat_id=update.message.chat_id, parse_mode='Markdown', text=response)
 
 
-def setup_dispantcher(dispatcher=None):
+def setup_dispatcher(dispatcher=None):
     routes = {
         ('start', start_handler),
         ('spent', spent_handler),
@@ -90,15 +90,10 @@ def vika(event, context):
     update_queue = None
     bot = telegram.Bot(TOKEN)
     dispatcher = Dispatcher(bot, update_queue, use_context=True)
-    setup_dispantcher(dispatcher=dispatcher)
+    setup_dispatcher(dispatcher=dispatcher)
 
     update = telegram.Update.de_json(json.loads(event['body']), bot)
     dispatcher.process_update(update)
-    response = {
+    return {
         "statusCode": 200,
     }
-    return response
-
-
-if __name__ == '__main__':
-    report_handler(None, None)

@@ -7,18 +7,19 @@ provider:
   environment:
     VIKA_TOKEN: ${env:VIKA_TOKEN}
 
-# you can add packaging information here
-#package:
-#  include:
-#    - include-me.py
-#    - include-me-dir/**
-#  exclude:
-#    - exclude-me.py
-#    - exclude-me-dir/**
+package:
+  include:
+    - tele_vika/**
+  exclude:
+    - node_modules/**
+    - dynamo/**
+    - .env
+    - package.json
+    - package-lock.json
 
 functions:
   hello:
-    handler: handler.vika
+    handler: tele_vika.handler.vika
     events:
       - http:
           path: vika
