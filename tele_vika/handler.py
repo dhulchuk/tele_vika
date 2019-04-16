@@ -1,22 +1,39 @@
 import json
+import logging
 import os
+import traceback
 
 import telegram
-from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
+from telegram.ext import Dispatcher, CommandHandler, Updater
 
+from tele_vika.conversation import set_conv_handler
 from tele_vika.dynamo import insert_spending, get_spending
 
 TOKEN = os.getenv('VIKA_TOKEN')
+DEBUG = True
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 
-def error(update, context):
+def error_wrapper(handler):
+    def wrapper(update, context):
+        try:
+            return handler(update, context)
+        except Exception:
+            if DEBUG:
+                context.bot.send_message(chat_id=update.message.chat_id, text=traceback.format_exc())
+
+    return wrapper
+
+
+def wrong_format(update, context):
     context.bot.send_message(chat_id=update.message.chat_id, text="Wrong message format.\n Type /help")
 
 
-def echo(update, context):
-    context.bot.send_message(chat_id=update.message.chat_id, text=update.message.text)
-
-
+@error_wrapper
 def help_handler(update, context):
     help_message = '\n'.join([
         '*Hello:*',
@@ -31,20 +48,22 @@ def help_handler(update, context):
     context.bot.send_message(chat_id=update.message.chat_id, parse_mode='Markdown', text=help_message)
 
 
+@error_wrapper
 def start_handler(update, context):
     name = update.effective_user.full_name
     context.bot.send_message(chat_id=update.message.chat_id, text=f"Hello, {name}!\nHere is all available commands.")
     help_handler(update, context)
 
 
+@error_wrapper
 def spent_handler(update, context):
     data = update.message.text.split(' ')
     if len(data) != 3:
-        return error(update, context)
+        return wrong_format(update, context)
     try:
         amount = int(data[1])
     except ValueError:
-        return error(update, context)
+        return wrong_format(update, context)
     tag = data[2]
     user_id = update.effective_user.id
     insert_spending(user_id, amount, tag)
@@ -54,6 +73,7 @@ def spent_handler(update, context):
     context.bot.send_message(chat_id=update.message.chat_id, parse_mode='Markdown', text=response)
 
 
+@error_wrapper
 def report_handler(update, context):
     user_id = update.effective_user.id
     data = get_spending(user_id)
@@ -67,7 +87,7 @@ def report_handler(update, context):
         if amount != 0:
             response += f'*{tag}*: `{amount}`\n'
     response += f'\n*Sum:* `{sum(by_tags.values())}`'
-    print(response)
+    logger.debug(response)
     context.bot.send_message(chat_id=update.message.chat_id, parse_mode='Markdown', text=response)
 
 
@@ -81,12 +101,9 @@ def setup_dispatcher(dispatcher=None):
     for command, handler in routes:
         dispatcher.add_handler(CommandHandler(command, handler))
 
-    echo_handler = MessageHandler(Filters.text, echo)
-    dispatcher.add_handler(echo_handler)
-
 
 def vika(event, context):
-    print(event)
+    logger.debug(event)
     update_queue = None
     bot = telegram.Bot(TOKEN)
     dispatcher = Dispatcher(bot, update_queue, use_context=True)
@@ -97,3 +114,20 @@ def vika(event, context):
     return {
         "statusCode": 200,
     }
+
+
+#########
+
+def vika_dev(token):
+    logger.info('init vika dev')
+    updater = Updater(token=token, use_context=True)
+    setup_dispatcher(updater.dispatcher)
+
+    # set_conv_handler(updater.dispatcher)
+
+    updater.start_polling()
+    updater.idle()
+
+
+if __name__ == '__main__':
+    vika_dev(os.getenv('VIKA_DEV_TOKEN'))
