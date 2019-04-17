@@ -19,7 +19,7 @@ package:
 
 functions:
   hello:
-    handler: tele_vika.handler.vika
+    handler: tele_vika.main.vika
     events:
       - http:
           path: vika
