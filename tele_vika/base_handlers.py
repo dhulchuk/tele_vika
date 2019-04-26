@@ -20,7 +20,7 @@ def help_handler(update, context):
 @error_wrapper
 def start_handler(update, context):
     name = update.effective_user.full_name
-    context.bot.send_message(chat_id=update.message.chat_id, text=f"Hello, {name}!\nHere is all available commands.")
+    context.bot.send_message(chat_id=update.message.chat_id, text=f"Hello, {name}!\nHere are all available commands.")
     help_handler(update, context)
 
 

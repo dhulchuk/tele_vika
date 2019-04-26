@@ -6,13 +6,20 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from tele_vika.dynamo import get_spending
 from tele_vika.tools import error_wrapper
 
-REPORT_TODAY, REPORT_MONTH = map(str, range(2))
+REPORT_TODAY, REPORT_WEEK, REPORT_MONTH = map(str, range(3))
 
 
 @error_wrapper
 def select_report(update, context):
-    keyboard = [[InlineKeyboardButton("Report today", callback_data=REPORT_TODAY),
-                 InlineKeyboardButton("Report last 30d", callback_data=REPORT_MONTH)]]
+    keyboard = [
+        [
+            InlineKeyboardButton("Report today", callback_data=REPORT_TODAY),
+            InlineKeyboardButton("Report this week", callback_data=REPORT_WEEK)
+        ],
+        [
+            InlineKeyboardButton("Report last 30d", callback_data=REPORT_MONTH)
+        ]
+    ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     update.message.reply_text('Please select:', reply_markup=reply_markup)
@@ -26,6 +33,12 @@ def select_button(update, context):
         response = '*Report for today:*\n\n'
         now = datetime.datetime.now()
         after_d = now.replace(hour=0, minute=0, second=0)
+        after = int(after_d.timestamp())
+    elif option == REPORT_WEEK:
+        response = '*Report for this week:*\n\n'
+        now = datetime.datetime.now()
+        after_d = now - datetime.timedelta(days=now.weekday())
+        after_d = after_d.replace(hour=0, minute=0, second=0)
         after = int(after_d.timestamp())
     elif option == REPORT_MONTH:
         response = '*Report for last 30 days:*\n\n'
