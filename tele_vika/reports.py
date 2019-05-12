@@ -6,7 +6,9 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from tele_vika.dynamo import get_spending
 from tele_vika.tools import error_wrapper
 
-REPORT_TODAY, REPORT_WEEK, REPORT_MONTH = map(str, range(3))
+PERIOD_SPLIT_DATE = 15
+
+REPORT_TODAY, REPORT_WEEK, REPORT_MONTH, REPORT_CURRENT_PERIOD = map(str, range(4))
 
 
 @error_wrapper
@@ -17,7 +19,9 @@ def select_report(update, context):
             InlineKeyboardButton("Report this week", callback_data=REPORT_WEEK)
         ],
         [
-            InlineKeyboardButton("Report last 30d", callback_data=REPORT_MONTH)
+            InlineKeyboardButton("Report last 30d", callback_data=REPORT_MONTH),
+            InlineKeyboardButton(f"Report current {PERIOD_SPLIT_DATE} to {PERIOD_SPLIT_DATE}",
+                                 callback_data=REPORT_CURRENT_PERIOD)
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -33,21 +37,28 @@ def select_button(update, context):
         response = '*Report for today:*\n\n'
         now = datetime.datetime.now()
         after_d = now.replace(hour=0, minute=0, second=0)
-        after = int(after_d.timestamp())
     elif option == REPORT_WEEK:
         response = '*Report for this week:*\n\n'
         now = datetime.datetime.now()
         after_d = now - datetime.timedelta(days=now.weekday())
         after_d = after_d.replace(hour=0, minute=0, second=0)
-        after = int(after_d.timestamp())
     elif option == REPORT_MONTH:
         response = '*Report for last 30 days:*\n\n'
         now = datetime.datetime.now()
         after_d = now - datetime.timedelta(days=30)
-        after = int(after_d.timestamp())
+    elif option == REPORT_CURRENT_PERIOD:
+        response = '*Report after the 15th:*\n\n'
+        now = datetime.datetime.now()
+        if now.day >= 15:
+            after_d = now.replace(day=15, hour=0, minute=0, second=0)
+        else:
+            after_d = now.replace(day=1)
+            after_d = after_d - datetime.timedelta(days=2)
+            after_d = after_d.replace(day=15, hour=0, minute=0, second=0)
     else:
         raise Exception(f'Wrong option {option}')
 
+    after = int(after_d.timestamp())
     response += format_report(user_id, after)
     context.bot.send_message(chat_id=update.effective_chat.id, parse_mode='Markdown', text=response)
 
